@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Vitoria Doctor | Absolute Legacy Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #000000;
+            --accent: #00d2ff;
+            --accent-dark: #0088ff;
+            --danger: #ff003c;
+            --danger-glow: rgba(255, 0, 60, 0.6);
+            --success: #00ff88;
+            --glass: rgba(18, 18, 20, 0.96);
+            --border: rgba(255, 255, 255, 0.15);
+            --text: #ffffff;
+            --text-dim: #a1a1a6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+
+        body { 
+            background: var(--bg); 
+            color: var(--text); 
+            overflow-x: hidden;
+            min-height: 100vh;
+            user-select: none;
+        }
+
+        #bg-canvas { position: fixed; top: 0; left: 0; z-index: -1; width: 100%; height: 100%; }
+
+        #splash {
+            position: fixed; inset: 0; background: #000; z-index: 10000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: 1s cubic-bezier(0.8, 0, 0.2, 1);
+        }
+
+        header {
+            padding: calc(45px + env(safe-area-inset-top)) 20px 20px;
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(40px);
+            position: sticky; top: 0; z-index: 900;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        #logo { font-weight: 800; font-size: 24px; letter-spacing: -1.5px; }
+        #logo span { color: var(--danger); text-shadow: 0 0 20px var(--danger-glow); }
+
+        .btn-back { 
+            background: var(--danger); color: #fff; padding: 12px 24px; 
+            border-radius: 30px; font-size: 11px; font-weight: 800; 
+            display: none; cursor: pointer; border: none;
+            text-transform: uppercase; letter-spacing: 2px;
+            box-shadow: 0 5px 20px var(--danger-glow);
+        }
+
+        #main-grid {
+            padding: 25px; display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 15px; max-width: 600px; margin: 0 auto;
+        }
+
+        .menu-item {
+            background: var(--glass); border: 1px solid var(--border);
+            border-radius: 30px; padding: 35px 15px; text-align: center;
+            cursor: pointer; transition: 0.4s;
+            position: relative; overflow: hidden;
+        }
+        .menu-item:hover { border-color: var(--accent); transform: translateY(-3px); }
+        .menu-item i { font-size: 38px; display: block; margin-bottom: 12px; filter: drop-shadow(0 0 12px var(--accent)); font-style: normal; }
+        .menu-item b { font-size: 11px; text-transform: uppercase; color: var(--text-dim); letter-spacing: 1.8px; }
+
+        .page { display: none; padding: 20px; max-width: 600px; margin: 0 auto; animation: pageIn 0.5s ease-out; }
+        @keyframes pageIn { from { opacity: 0; transform: translateY(30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+        .card { 
+            background: var(--glass); border-radius: 28px; padding: 24px; 
+            border: 1px solid var(--border); margin-bottom: 20px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+        }
+
+        .section-title { font-size: 12px; font-weight: 800; color: var(--accent); margin: 25px 0 15px; text-transform: uppercase; letter-spacing: 3px; display: flex; align-items: center; gap: 12px; }
+        .section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--border), transparent); }
+
+        .input-group { margin-bottom: 18px; }
+        label { display: block; font-size: 10px; font-weight: 800; color: var(--text-dim); margin-bottom: 8px; text-transform: uppercase; }
+        input, select, textarea { 
+            width: 100%; padding: 18px; border-radius: 16px; border: 1px solid var(--border); 
+            background: rgba(255,255,255,0.06); color: #fff; font-size: 16px; transition: 0.3s;
+        }
+        input:focus { border-color: var(--accent); outline: none; background: rgba(0,210,255,0.05); }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+        .btn { 
+            width: 100%; padding: 20px; border-radius: 18px; border: none; 
+            font-weight: 800; font-size: 13px; cursor: pointer; text-transform: uppercase;
+            letter-spacing: 2px; transition: 0.3s;
+        }
+        .btn-prime { background: linear-gradient(135deg, var(--accent), var(--accent-dark)); color: #fff; }
+        .btn-danger { background: var(--danger); color: #fff; box-shadow: 0 8px 25px var(--danger-glow); }
+        .btn-ghost { background: var(--glass-light); color: #fff; border: 1px solid var(--border); }
+
+        .result { 
+            margin-top: 15px; padding: 20px; background: rgba(0, 210, 255, 0.1); 
+            border-radius: 20px; border-left: 6px solid var(--accent); display: none; 
+            font-size: 15px; line-height: 1.7; animation: resultShow 0.4s ease;
+        }
+        @keyframes resultShow { from { opacity: 0; filter: blur(10px); } to { opacity: 1; filter: blur(0); } }
+
+        .rcp-circle { 
+            width: 180px; height: 180px; border-radius: 50%; border: 6px solid var(--border); 
+            margin: 20px auto; display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            font-size: 48px; font-weight: 200; color: var(--danger); transition: 0.3s;
+        }
+        .rcp-active { border-color: var(--danger); box-shadow: 0 0 40px var(--danger-glow); animation: pulse 0.8s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 10% { transform: scale(1.08); } 100% { transform: scale(1); } }
+
+        .dict-item { padding: 18px; border-bottom: 1px solid var(--border); transition: 0.3s; }
+        .dict-item:hover { background: rgba(255,255,255,0.05); }
+        .dict-item b { color: var(--accent); font-size: 17px; display: block; margin-bottom: 5px; }
+        .dict-item p { font-size: 14px; color: var(--text-dim); }
+
+        footer { text-align: center; padding: 50px 20px; opacity: 0.4; font-size: 10px; letter-spacing: 5px; color: var(--text-dim); }
+    </style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<div id="splash">
+    <div style="font-size: 50px; margin-bottom: 20px; filter: drop-shadow(0 0 20px #fff);">🩺</div>
+    <h1 id="splash-logo" style="font-size: 42px; font-weight: 800; letter-spacing: -3px;">Vitoria<span>Doctor</span></h1>
+    <div style="width: 50px; height: 4px; background: var(--danger); margin: 20px 0; border-radius: 10px; box-shadow: 0 0 20px var(--danger-glow);"></div>
+    <p style="font-size: 10px; letter-spacing: 8px; color: var(--text-dim);">LEGACY ULTIMATE V7.0</p>
+</div>
+
+<header>
+    <div id="logo">Vitoria<span>Doctor</span></div>
+    <button class="btn-back" id="btn-back" onclick="nav.home()">VOLTAR</button>
+</header>
+
+<main id="main-grid">
+    <div class="menu-item" onclick="nav.go('farma')"><i>💊</i><b>Fármacos</b></div>
+    <div class="menu-item" onclick="nav.go('ped')"><i>👶</i><b>Pediatria</b></div>
+    <div class="menu-item" onclick="nav.go('uti')"><i>🚑</i><b>Emergência</b></div>
+    <div class="menu-item" onclick="nav.go('gaso')"><i>🧪</i><b>Gasometria</b></div>
+    <div class="menu-item" onclick="nav.go('gineco')"><i>🌸</i><b>Ginecologia</b></div>
+    <div class="menu-item" onclick="nav.go('nefro')"><i>💧</i><b>Nefrologia</b></div>
+    <div class="menu-item" onclick="nav.go('burn')"><i>🔥</i><b>Queimados</b></div>
+    <div class="menu-item" onclick="nav.go('vent')"><i>🫁</i><b>Ventilação</b></div>
+    <div class="menu-item" onclick="nav.go('score')"><i>📊</i><b>Escores</b></div>
+    <div class="menu-item" onclick="nav.go('body')"><i>⚖️</i><b>Antropo</b></div>
+    <div class="menu-item" onclick="nav.go('dict')"><i>📚</i><b>Biblioteca</b></div>
+    <div class="menu-item" onclick="nav.go('evo')"><i>📝</i><b>Evolução</b></div>
+</main>
+
+<!-- PÁGINAS COM LÓGICA RESTAURADA -->
+
+<section id="p-farma" class="page">
+    <div class="section-title">Infusão Contínua</div>
+    <div class="card">
+        <div class="grid-2">
+            <div class="input-group"><label>Volume (ml)</label><input type="number" id="f_v"></div>
+            <div class="input-group"><label>Tempo (h)</label><input type="number" id="f_t"></div>
+        </div>
+        <button class="btn btn-prime" onclick="calc.farma()">Calcular Vazão</button>
+        <div id="res-farma" class="result"></div>
+    </div>
+</section>
+
+<section id="p-ped" class="page">
+    <div class="section-title">Holliday-Segar</div>
+    <div class="card">
+        <div class="input-group"><label>Peso (kg)</label><input type="number" id="p_w"></div>
+        <button class="btn btn-prime" onclick="calc.ped()">Calcular Hidratação</button>
+        <div id="res-ped" class="result"></div>
+    </div>
+</section>
+
+<section id="p-uti" class="page">
+    <div class="section-title">Parada Cardiorespiratória</div>
+    <div class="card" style="text-align: center;">
+        <div class="rcp-circle" id="rcp-timer">02:00</div>
+        <button class="btn btn-danger" id="rcp-btn" onclick="calc.rcpStart()">INICIAR CICLO</button>
+    </div>
+</section>
+
+<section id="p-gaso" class="page">
+    <div class="section-title">Acidose / Alcalose</div>
+    <div class="card">
+        <div class="grid-2">
+            <div class="input-group"><label>pH</label><input type="number" step="0.01" id="g_ph"></div>
+            <div class="input-group"><label>pCO2</label><input type="number" id="g_co2"></div>
+        </div>
+        <div class="input-group"><label>HCO3</label><input type="number" id="g_hco3"></div>
+        <button class="btn btn-prime" onclick="calc.gaso()">Analisar Estado</button>
+        <div id="res-gaso" class="result"></div>
+    </div>
+</section>
+
+<section id="p-gineco" class="page">
+    <div class="section-title">Saúde da Mulher</div>
+    <div class="card">
+        <div class="input-group"><label>Última Menstruação (DUM)</label><input type="date" id="dum"></div>
+        <div class="input-group"><label>Ciclo (Dias)</label><input type="number" id="ciclo_dur" value="28"></div>
+        <div class="grid-2">
+            <button class="btn btn-prime" onclick="calc.gineco('gravidez')">Gestação</button>
+            <button class="btn btn-ghost" onclick="calc.gineco('fertil')">Ciclo Fértil</button>
+        </div>
+        <div id="res-gineco" class="result"></div>
+    </div>
+</section>
+
+<section id="p-nefro" class="page">
+    <div class="section-title">Filtração Glomerular</div>
+    <div class="card">
+        <div class="grid-2">
+            <input type="number" id="n_age" placeholder="Idade">
+            <input type="number" id="n_weight" placeholder="Peso (kg)">
+        </div>
+        <div class="grid-2" style="margin-top:10px;">
+            <input type="number" id="n_cr" placeholder="Creatinina">
+            <select id="n_sex"><option value="1">Masculino</option><option value="0.85">Feminino</option></select>
+        </div>
+        <button class="btn btn-prime" style="margin-top:15px;" onclick="calc.nefro()">Calcular Cockcroft</button>
+        <div id="res-nefro" class="result"></div>
+    </div>
+</section>
+
+<section id="p-burn" class="page">
+    <div class="section-title">Fórmula de Parkland</div>
+    <div class="card">
+        <div class="grid-2">
+            <input type="number" id="burn_w" placeholder="Peso (kg)">
+            <input type="number" id="burn_scq" placeholder="% SCQ">
+        </div>
+        <button class="btn btn-prime" style="margin-top:15px;" onclick="calc.burn()">Volume RL (24h)</button>
+        <div id="res-burn" class="result"></div>
+    </div>
+</section>
+
+<section id="p-vent" class="page">
+    <div class="section-title">Ventilação Mecânica</div>
+    <div class="card">
+        <div class="grid-2">
+            <input type="number" id="v_h" placeholder="Altura (cm)">
+            <select id="v_sex"><option value="50">Masculino</option><option value="45.5">Feminino</option></select>
+        </div>
+        <button class="btn btn-prime" style="margin-top:15px;" onclick="calc.vent()">Volume Corrente</button>
+        <div id="res-vent" class="result"></div>
+    </div>
+</section>
+
+<section id="p-score" class="page">
+    <div class="section-title">Escores de Coma</div>
+    <div class="card">
+        <div class="grid-2">
+            <input type="number" id="s_o" placeholder="Ocular (1-4)">
+            <input type="number" id="s_v" placeholder="Verbal (1-5)">
+            <input type="number" id="s_m" placeholder="Motor (1-6)">
+            <input type="number" id="s_p" placeholder="Pupila (0-2)">
+        </div>
+        <button class="btn btn-danger" style="margin-top:15px;" onclick="calc.score()">Glasgow-P</button>
+        <div id="res-score" class="result"></div>
+    </div>
+</section>
+
+<section id="p-body" class="page">
+    <div class="section-title">Antropometria</div>
+    <div class="card">
+        <div class="grid-2">
+            <input type="number" id="b_w" placeholder="Peso (kg)">
+            <input type="number" id="b_h" placeholder="Altura (cm)">
+        </div>
+        <button class="btn btn-prime" style="margin-top:15px;" onclick="calc.body()">Analisar IMC</button>
+        <div id="res-body" class="result"></div>
+    </div>
+</section>
+
+<section id="p-dict" class="page">
+    <div class="section-title">Biblioteca Legacy</div>
+    <div class="card">
+        <input type="text" id="d_search" placeholder="Busque Termo, Sintoma ou CID..." onkeyup="calc.dict()">
+        <div id="dict-list" style="max-height: 450px; overflow-y: auto; margin-top: 15px;"></div>
+    </div>
+</section>
+
+<section id="p-evo" class="page">
+    <div class="section-title">Evolução SOAP</div>
+    <div class="card">
+        <textarea id="evo_note" style="height: 400px; background: rgba(0,0,0,0.5);" placeholder="S: Subjetivo&#10;O: Objetivos&#10;A: Avaliação&#10;P: Plano"></textarea>
+        <button class="btn btn-prime" style="margin-top:15px;" onclick="calc.save()">SALVAR NOTA</button>
+    </div>
+</section>
+
+<footer>VITORIA DOCTOR • ABSOLUTE LEGACY V7.0</footer>
+
+<script>
+    // --- MOTOR GRÁFICO ---
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    function initBg() {
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        particles = Array.from({length: 100}, () => ({
+            x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+            s: Math.random() * 2, sx: (Math.random()-0.5)*0.6, sy: (Math.random()-0.5)*0.6,
+            c: Math.random() > 0.7 ? '#ff003c' : '#00d2ff'
+        }));
+    }
+    function animateBg() {
+        ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+        particles.forEach(p => {
+            p.x += p.sx; p.y += p.sy;
+            if(p.x<0||p.x>canvas.width) p.sx*=-1; if(p.y<0||p.y>canvas.height) p.sy*=-1;
+            ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x,p.y,p.s,0,Math.PI*2); ctx.fill();
+        });
+        requestAnimationFrame(animateBg);
+    }
+
+    // --- NAVEGAÇÃO ---
+    const nav = {
+        go: (id) => {
+            document.getElementById('main-grid').style.display = 'none';
+            document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+            const target = document.getElementById('p-' + id);
+            if(target) target.style.display = 'block';
+            document.getElementById('btn-back').style.display = 'block';
+            window.scrollTo(0,0);
+        },
+        home: () => {
+            document.getElementById('main-grid').style.display = 'grid';
+            document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+            document.getElementById('btn-back').style.display = 'none';
+        }
+    };
+
+    // --- LÓGICA MÉDICA ---
+    const calc = {
+        farma: () => {
+            const v = parseFloat(document.getElementById('f_v').value);
+            const t = parseFloat(document.getElementById('f_t').value);
+            const r = document.getElementById('res-farma'); r.style.display = 'block';
+            if(!v || !t) { r.innerText = "Insira os dados."; return; }
+            r.innerHTML = `Vazão: <b>${(v/t).toFixed(1)} ml/h</b><br>Gotas: <b>${Math.round(v/(t*3))} gts/min</b>`;
+        },
+        ped: () => {
+            const w = parseFloat(document.getElementById('p_w').value);
+            const r = document.getElementById('res-ped'); r.style.display = 'block';
+            if(!w) return;
+            let v = w <= 10 ? w*100 : (w <= 20 ? 1000+(w-10)*50 : 1500+(w-20)*20);
+            r.innerHTML = `Hidratação (24h): <b>${v} ml</b><br>Manutenção (BIC): <b>${(v/24).toFixed(1)} ml/h</b>`;
+        },
+        gaso: () => {
+            const ph = parseFloat(document.getElementById('g_ph').value);
+            const co = parseFloat(document.getElementById('g_co2').value);
+            const r = document.getElementById('res-gaso'); r.style.display = 'block';
+            if(!ph || !co) return;
+            let d = "Normal";
+            if(ph < 7.35) d = co > 45 ? "Acidose Respiratória" : "Acidose Metabólica";
+            if(ph > 7.45) d = co < 35 ? "Alcalose Respiratória" : "Alcalose Metabólica";
+            r.innerHTML = `Diagnóstico Sugestivo: <b style="color:var(--danger)">${d}</b>`;
+        },
+        gineco: (tipo) => {
+            const d = document.getElementById('dum').value; if(!d) return;
+            const dum = new Date(d + 'T00:00:00');
+            const cic = parseInt(document.getElementById('ciclo_dur').value) || 28;
+            const r = document.getElementById('res-gineco'); r.style.display = 'block';
+            if(tipo === 'gravidez') {
+                const diff = Math.floor((new Date() - dum) / 86400000);
+                const dpp = new Date(dum); dpp.setDate(dpp.getDate() + 280);
+                r.innerHTML = `Idade: <b>${Math.floor(diff/7)}s e ${diff%7}d</b><br>DPP: <b>${dpp.toLocaleDateString()}</b>`;
+            } else {
+                const ovu = new Date(dum); ovu.setDate(ovu.getDate() + (cic-14));
+                r.innerHTML = `Provável Ovulação: <b>${ovu.toLocaleDateString()}</b><br>Fértil: <b>${new Date(ovu.getTime()-172800000).toLocaleDateString()} a ${new Date(ovu.getTime()+86400000).toLocaleDateString()}</b>`;
+            }
+        },
+        nefro: () => {
+            const a = parseFloat(document.getElementById('n_age').value);
+            const w = parseFloat(document.getElementById('n_weight').value);
+            const c = parseFloat(document.getElementById('n_cr').value);
+            const s = parseFloat(document.getElementById('n_sex').value);
+            const r = document.getElementById('res-nefro'); r.style.display = 'block';
+            const res = (((140-a)*w)/(72*c))*s;
+            r.innerHTML = `TFG Cockcroft: <b>${res.toFixed(1)} ml/min</b>`;
+        },
+        burn: () => {
+            const w = parseFloat(document.getElementById('burn_w').value);
+            const s = parseFloat(document.getElementById('burn_scq').value);
+            const r = document.getElementById('res-burn'); r.style.display = 'block';
+            const vol = 4 * w * s;
+            r.innerHTML = `Cristaloide (24h): <b>${vol} ml</b><br>Primeiras 8h: <b>${vol/2} ml</b>`;
+        },
+        vent: () => {
+            const h = parseFloat(document.getElementById('v_h').value);
+            const s = parseFloat(document.getElementById('v_sex').value);
+            const r = document.getElementById('res-vent'); r.style.display = 'block';
+            const pi = s + 0.91 * (h - 152.4);
+            r.innerHTML = `Peso Predito: <b>${pi.toFixed(1)} kg</b><br>VC (6ml/kg): <b>${Math.round(pi*6)} ml</b>`;
+        },
+        score: () => {
+            const o = parseInt(document.getElementById('s_o').value)||0;
+            const v = parseInt(document.getElementById('s_v').value)||0;
+            const m = parseInt(document.getElementById('s_m').value)||0;
+            const p = parseInt(document.getElementById('s_p').value)||0;
+            const res = (o+v+m) - p;
+            const r = document.getElementById('res-score'); r.style.display = 'block';
+            r.innerHTML = `Total Glasgow-P: <b style="color:var(--danger)">${res}</b>`;
+        },
+        body: () => {
+            const w = parseFloat(document.getElementById('b_w').value);
+            const h = parseFloat(document.getElementById('b_h').value)/100;
+            const r = document.getElementById('res-body'); r.style.display = 'block';
+            const imc = w / (h*h);
+            let cat = imc < 18.5 ? "Baixo Peso" : imc < 25 ? "Eutrófico" : "Sobrepeso/Obesidade";
+            r.innerHTML = `IMC: <b>${imc.toFixed(1)}</b> (${cat})`;
+        },
+        rcpStart: function() {
+            if(this.timer) return;
+            let s = 120; const t = document.getElementById('rcp-timer');
+            t.classList.add('rcp-active');
+            this.timer = setInterval(() => {
+                s--; t.innerText = `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
+                if(s<=0) { clearInterval(this.timer); this.timer = null; t.classList.remove('rcp-active'); alert("TROCAR COMPRESSOR!"); t.innerText = "02:00"; }
+            }, 1000);
+        },
+        dict: () => {
+            const q = document.getElementById('d_search').value.toLowerCase();
+            const l = document.getElementById('dict-list'); l.innerHTML = "";
+            const data = [
+                {t:"Acantose Nigricans", d:"Pele escura e aveludada. Indica resistência insulínica."},
+                {t:"Bradipneia", d:"Frequência respiratória lenta (< 12 rpm)."},
+                {t:"CID-10 I10", d:"Hipertensão Arterial Sistêmica."},
+                {t:"CID-10 E11", d:"Diabetes Mellitus Tipo 2."},
+                {t:"CID-10 J44", d:"DPOC."},
+                {t:"Delirium", d:"Estado de confusão mental agudo."},
+                {t:"Eritema", d:"Vermelhidão na pele."},
+                {t:"Fibrilação Atrial", d:"Arritmia cardíaca irregular e rápida."},
+                {t:"Glomerulonefrite", d:"Inflamação dos glomérulos renais."},
+                {t:"Hemorragia Digestiva", d:"Sangramento no trato gastrointestinal."},
+                {t:"Icterícia", d:"Pele amarelada por excesso de bilirrubina."},
+                {t:"Janela Terapêutica", d:"Intervalo de dose segura do fármaco."},
+                {t:"Lactato", d:"Marcador de hipóxia e choque."},
+                {t:"Melena", d:"Fezes com sangue digerido (negras)."},
+                {t:"Nefropatia Diabética", d:"Dano renal pelo diabetes."},
+                {t:"Ortopneia", d:"Dificuldade em respirar deitado."},
+                {t:"Pneumotórax", d:"Presença de ar na cavidade pleural."},
+                {t:"QRS Alargado", d:"Indica atraso na condução ventricular."},
+                {t:"Sepse", d:"Infecção generalizada com falha orgânica."},
+                {t:"Taquicardia", d:"Frequência cardíaca > 100 bpm."}
+            ];
+            data.filter(i => i.t.toLowerCase().includes(q) || i.d.toLowerCase().includes(q)).forEach(i => {
+                l.innerHTML += `<div class="dict-item"><b>${i.t}</b><p>${i.d}</p></div>`;
+            });
+        },
+        save: () => { 
+            localStorage.setItem('vdoc_v7_evo', document.getElementById('evo_note').value);
+            alert("Nota Sincronizada com Sucesso!");
+        }
+    };
+
+    window.onload = () => {
+        initBg(); animateBg(); calc.dict();
+        document.getElementById('evo_note').value = localStorage.getItem('vdoc_v7_evo') || "";
+        setTimeout(() => { document.getElementById('splash').style.opacity = '0'; setTimeout(()=>document.getElementById('splash').style.display='none', 1000); }, 2000);
+    };
+</script>
+</body>
+</html>
